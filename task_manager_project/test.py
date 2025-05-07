@@ -1,19 +1,16 @@
-# Установите PassLib, если ещё не сделали:
-# pip install passlib[bcrypt]
-
 from passlib.context import CryptContext
 
-# Настраиваем CryptContext на работу с bcrypt
+# Initialize the password context (matching the bcrypt scheme from the logs)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def hash_string(s: str) -> str:
-    """
-    Хеширует строку s через bcrypt и возвращает результат.
-    """
-    return pwd_context.hash(s)
+# The password hash from the logs
+stored_hash = "$2b$12$VfHzeOHpewYE7Tmhj7iFpul7lmI3n2vRKPI/Gdzod82rXpSgeYq.W"
 
-if __name__ == "__main__":
-    original = "test123"
-    hashed = hash_string(original)
-    print(f"Оригинал: {original}")
-    print(f"Хеш:     {hashed}")
+# Replace this with the password you think was used during registration
+test_password = "test123"
+
+# Verify the password against the stored hash
+is_valid = pwd_context.verify(test_password, stored_hash)
+
+# Print the result
+print(f"Password verification result: {is_valid}")

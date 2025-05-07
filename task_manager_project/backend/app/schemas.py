@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 
 class UserCreate(BaseModel):
@@ -26,3 +26,5 @@ class TaskOut(BaseModel):
     description: str
     status: str
     priority: int
+
+    model_config = ConfigDict(from_attributes=True)

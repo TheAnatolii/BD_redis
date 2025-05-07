@@ -19,6 +19,7 @@ def run_frontend():
                         "http://localhost:8000/login",
                         json={"username": username, "password": password}
                     )
+                    st.write(response.json())
                     if response.status_code == 200:
                         st.session_state["token"] = response.json()["token"]
                         st.success("Logged in!")
@@ -38,6 +39,7 @@ def run_frontend():
                         "http://localhost:8000/register",
                         json={"username": reg_username, "password": reg_password}
                     )
+                    st.write(response.json())
                     if response.status_code == 200:
                         st.success("Registration successful! Please login.")
                     else:

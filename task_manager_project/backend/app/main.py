@@ -9,13 +9,15 @@ from .config import DATABASE_URL, TOKEN_TTL
 from .models import User
 import json
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Добавляем CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # В продакшене заменить на конкретные домены
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,12 +41,17 @@ async def register(user: UserCreate):
 
 @app.post("/login")
 async def login(login_data: LoginData):
+    logger.info(f"Attempting login for user: {login_data.username}")
     user = await get_user_by_username(login_data.username)
-    if not user or not await verify_password(login_data.password, user.password_hash):
+    if not user:
+        logger.info("User not found")
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    logger.info(f"User found: {user.username}, password hash: {user.password_hash}")
+    if not await verify_password(login_data.password, user.password_hash):
+        logger.info("Password verification failed")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    logger.info("Password verified successfully")
     token = create_jwt_token(user.id)
-    await redis_client.set(f"token:{token}", user.id, ex=TOKEN_TTL)
-    await redis_client.set(f"session:{user.id}", json.dumps({"username": user.username}), ex=TOKEN_TTL)
     return {"token": token}
 
 @app.post("/tasks", response_model=TaskOut)

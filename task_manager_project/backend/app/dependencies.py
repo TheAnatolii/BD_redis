@@ -6,6 +6,8 @@ from .auth import create_jwt_token
 from .models import User
 from .config import TOKEN_TTL, REDIS_URL
 import logging
+import jwt
+from .config import SECRET_KEY, ALGORITHM
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,28 +17,15 @@ redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        user_id = await redis_client.get(f"token:{token}")
-        if not user_id:
-            logger.error(f"Token not found in Redis: {token}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token"
-            )
-        
-        # Получаем пользователя по ID
-        try:
-            user = await User.get(id=int(user_id))
-            return user
-        except DoesNotExist:
-            logger.error(f"User not found for ID: {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
-        
-    except Exception as e:
-        logger.error(f"Error in get_current_user: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication failed"
-        )
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user = await User.get(id=int(user_id))
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except DoesNotExist:
+        raise HTTPException(status_code=401, detail="User not found")
