@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+tortoise-orm
+redis
+pyjwt
+passlib[bcrypt]
+streamlit
+requests
