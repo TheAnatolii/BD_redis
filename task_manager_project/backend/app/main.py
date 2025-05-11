@@ -78,3 +78,7 @@ async def listen_for_updates(pubsub):
     async for message in pubsub.listen():
         if message["type"] == "message":
             print(f"Received update: {message['data']}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await redis_client.close()
